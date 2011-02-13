@@ -24,6 +24,10 @@ module KVOblocks
       @observee.removeObserver(self, forKeyPath:@path)
     end
   end
+  
+  def add_observer_for_key_path(path, &block)
+    (@__observers_array__ ||= []) << Observer.new(self, path, false, block)
+  end
 
   def add_observer_for_key_path(path, async:async, &block)
     (@__observers_array__ ||= []) << Observer.new(self, path, async, block)
