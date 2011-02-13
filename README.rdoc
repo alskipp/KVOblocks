@@ -1,3 +1,46 @@
 = KVOblocks for MacRuby
 
 Inspired by KVO+Blocks[https://gist.github.com/153676] for Objective-C, KVOblocks brings a cleaner API to using {Key Value Observing}[http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/KeyValueCoding/KeyValueCoding.html] in Macruby.
+
+== Example Usage
+
+Key Value Observing can be very verbose and require a significant amount of boilerplate code. The KVOblocks module aims to remove all the excess code and create a succinct, readable API. Here is an example of what Key Value Observing looks like without using the KVOblocks module. We have a 'Train' class that is initialized with a number of passengers, as these passengers are very hefty they have quite an impact on fuel consumption, therefore every time the passenger number changes the miles_per_gallon needs to be recalculated:
+
+	class Train
+		attr_accessor :passengers
+	
+		def initialize(passengers)
+			@passengers = passengers
+			self.addObserver(self, forKeyPath:'passengers', options:0, context:nil)
+		end
+	
+		def observeValueForKeyPath(path, ofObject:object, change:change, context:context)
+			if object == self && path == 'passengers'
+				calculate_miles_per_gallon
+			else
+				super
+			end
+		end
+	end
+
+	train = Train.new(2)
+	train.setPassengers(20)
+	
+As can be seen from the above example, not only is the API more verbose than it needs to be, the code that is executed for the observed object needs to be placed in a different method call 'observeValueForKeyPath(path, ofObject:object, change:change, context:context)', which obscures the intent of the code. When several observers are added, this problem is compounded further as all observer code needs to be placed in this one method.
+
+Here is the equivalent code using the KVOblocks module:
+
+	require 'KVOblocks'
+	class Train
+		attr_accessor :passengers
+
+		def initialize(passengers)
+			@passengers = passengers
+			self.add_observer_for_key_path('passengers') { calculate_miles_per_gallon }
+		end
+	end
+
+	train = Train.new(2)
+	train.setPassengers(20)
+	
+The defining of the observer and the code to be executed are defined together, greatly improving the clarity of the code.
