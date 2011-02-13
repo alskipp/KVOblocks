@@ -77,28 +77,55 @@ module KVOblocks
   module ObserveArrayContents
 
     # in addition to the hash opts explained above in ObserveObject module, there is a :range option
-    # the value of the :range key must be a NSRange object, NOT a ruby Range object
-    # it defines which objects of the array will be observed
+    # the value of the :range key must be a Range or NSRange object
+    # it specifies which objects of the array will be observed
     # if no value is given, all objects will be observed
 
     def add_observer_to_objects_for_key_path(path, opts={}, &block)
       SERIAL_QUEUE.sync do
-        indexes = NSIndexSet.indexSetWithIndexesInRange(opts[:range] || NSRange.new(0,size))
+        range = if opts[:range].nil?
+          NSRange.new(0,size)
+        elsif opts[:range].is_a?(Range)
+          opts[:range].NSRange_for_array(self)
+        else
+          opts[:range]
+        end
+        indexes = NSIndexSet.indexSetWithIndexesInRange(range)
         (@__observers_array__ ||= []) << ArrayObserver.new(self, indexes, path, opts[:async], opts[:options]||0, block)
       end
     end
+    
+    def remove_observer_for_key_path(path, range = NSRange.new(0, size))
+      SERIAL_QUEUE.sync do
+        indexes = NSIndexSet.indexSetWithIndexesInRange(range.is_a?(Range) ? range.NSRange_for_array(self) : range)
+        observer = @__observers_array__.find {|o| o.path == path && o.observee == self} if @__observers_array__
+        @__observers_array__.delete(observer) and observer.cancel_observation_for_objects_at_indexes(indexes) if observer
+      end
+    end
 
-    def remove_all_observers
+    def remove_all_observers(range = NSRange.new(0, size))
       SERIAL_QUEUE.sync do
         if @__observers_array__
-          indexes = NSIndexSet.indexSetWithIndexesInRange(NSRange.new(0,size))
+          indexes = NSIndexSet.indexSetWithIndexesInRange(range.is_a?(Range) ? range.NSRange_for_array(self) : range)
           @__observers_array__.each { |e| e.cancel_observation_for_objects_at_indexes(indexes) } and @__observers_array__.clear
         end
       end
     end
-
+  end
+  
+  
+  module RangeToNSRange
+    def NSRange_for_array(array)
+      length = last < 0 ? array.size-first+last : last-first
+      NSRange.new(first, exclude_end? ? length : length+1)
+    end
   end
 
+end
+
+
+class Range
+  include KVOblocks::RangeToNSRange
 end
 
 class Object
