@@ -3,8 +3,8 @@ module KVOblocks
   class Observer
 
     attr_reader :observee, :path
-    
-    def initialize(object, path, async, block, opts=0)
+
+    def initialize(object, path, async, opts, block)
       @observee = object
       @path = path
       @async = async
@@ -24,26 +24,26 @@ module KVOblocks
       @observee.removeObserver(self, forKeyPath:@path)
     end
   end
-  
-  def add_observer_for_key_path(path, &block)
-    (@__observers_array__ ||= []) << Observer.new(self, path, false, block)
-  end
 
-  def add_observer_for_key_path(path, async:async, &block)
-    (@__observers_array__ ||= []) << Observer.new(self, path, async, block)
-  end
+  SERIAL_QUEUE = Dispatch::Queue.new("serial_queue.kvoblocks")
 
-  def add_observer_for_key_path(path, async:async, options:opts, &block)
-    (@__observers_array__ ||= []) << Observer.new(self, path, async, block, opts)
+  def add_observer_for_key_path(path, opts={}, &block)
+    SERIAL_QUEUE.sync do
+      (@__observers_array__ ||= []) << Observer.new(self, path, opts[:async], opts[:options]||0, block)
+    end
   end
 
   def remove_observer_for_key_path(path)
-    observer = @__observers_array__.find {|o| o.path == path && o.observee == self} if @__observers_array__
-    @__observers_array__.delete(observer) and observer.cancel_observation if observer
+    SERIAL_QUEUE.sync do
+      observer = @__observers_array__.find {|o| o.path == path && o.observee == self} if @__observers_array__
+      @__observers_array__.delete(observer) and observer.cancel_observation if observer
+    end
   end
-  
+
   def remove_all_observers
-    @__observers_array__.each { |e| e.cancel_observation } and @__observers_array__.clear if @__observers_array__
+    SERIAL_QUEUE.sync do
+      @__observers_array__.each { |e| e.cancel_observation } and @__observers_array__.clear if @__observers_array__
+    end
   end
 
 end
