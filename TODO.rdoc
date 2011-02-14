@@ -1,3 +1,7 @@
-= Priority
+== Must do
 
 @observee instance var needs to be a weak reference, otherwise the object may never be garbage collected. If an object defines observers for it's own instance variables, the observers should be garbage collected with the object. However when an object observes the state of another, the observed object will not be garbage collected until observation is cancelled. A weak reference will solve this problem.
+
+== Improvements
+
+Replace @__observers_array__ with a hash
