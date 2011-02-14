@@ -1,6 +1,6 @@
 = KVOblocks for MacRuby
 
-Inspired by KVO+Blocks[https://gist.github.com/153676] for Objective-C, KVOblocks brings a cleaner API to using {Key Value Observing}[http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/KeyValueCoding/KeyValueCoding.html] in Macruby.
+Inspired by KVO+Blocks[https://gist.github.com/153676] for Objective-C, KVOblocks brings a cleaner API to using {Key Value Observing}[http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/KeyValueObserving/KeyValueObserving.html%23//apple_ref/doc/uid/10000177i] in Macruby.
 
 == Example Usage
 
