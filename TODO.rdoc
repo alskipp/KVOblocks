@@ -5,3 +5,16 @@
 == Improvements
 
 Replace @__observers_array__ with a hash
+
+Currently the API assumes observers are only defined on their own instance variables. For example given an instance of a Rocket class with an array instance variable '@engines', the engines' thrust can be observed like this:
+    
+    @engines.add_observer_to_objects_for_key_path('thrust') { do_something }
+    
+However the API does not allow a controller object to instruct a Rocket Object to observe a property of an object which is not one of its own instance variables, such as a Star object.
+Here is an Objective-C example from Apple, the KVOblocks module can not currently do this:
+
+    [account addObserver:inspector
+              forKeyPath:@"openingBalance"
+                 options:(NSKeyValueObservingOptionNew |
+                            NSKeyValueObservingOptionOld)
+                 context:NULL];
